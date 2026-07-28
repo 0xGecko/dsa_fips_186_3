@@ -10,4 +10,11 @@
 Le projet est composé de fichiers source Java natifs. Pour compiler le projet, ouvrez un terminal à la racine du projet et exécutez la commande suivante :
 
 ```bash
-javac DSA.java
+make
+```
+
+Et pour nettoyer :
+
+```bash
+make clean
+```

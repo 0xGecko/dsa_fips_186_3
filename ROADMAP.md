@@ -10,11 +10,20 @@ Cette feuille de route détaille les étapes de développement pour l'implément
 - [x] Implémenter le calcul du générateur $g$ via la méthode d'exponentiation modulaire (`modPow`).
 
 ## Étape 2 : Génération des clés
-- [ ] Implémenter une méthode pour générer la clé privée $x$ telle que $0 < x < l$.
-- [ ] Implémenter le calcul de la clé publique $y = g^x \pmod p$.
+- [x] Implémenter une méthode pour générer la clé privée $x$ telle que $0 < x < l$.
+- [x] Implémenter le calcul de la clé publique $y = g^x \pmod p$.
 
 ## Étape 3 : Algorithme de Signature
-- [ ] Créer une fonction de hachage $H(M)$ (SHA-3 ou factice pour commencer).
+- [ ] Créer la fonction de hachage $H(M)$ de SHA-3.
+    - [x] Structure de l'état interne : Représenter l'état de 1600 bits sous la forme d'un tableau tridimensionnel 5x5 de mots de 64 bits (long[5][5]).
+    - [ ] Padding : Implémenter la règle de bourrage pad10*1 pour aligner les messages selon le taux propre à la fonction.
+    - [ ] Permutation Keccak-f[1600] : Coder les 5 étapes successives d'un round :
+        * Theta ($\theta$) : Diffusion et calcul de parité des colonnes.  
+        * Rho ($\rho$) : Rotation circulaire interne des bits au sein de chaque mot.
+        * Pi ($\pi$) : Permutation géométrique des mots sur la grille 5x5.  
+        * Chi ($\chi$) : Opération non-linéaire (S-box) combinant les lignes.  
+        * Iota ($\iota$) : Injection des constantes de rounds pour briser la symétrie.
+    - [ ] Mécanisme Éponge : Assembler les phases d'absorption des blocs de messages et de compression/extraction (squeezing) pour délivrer un condensé (digest) de taille fixe (à décidé, ex : SHA3-256).
 - [ ] Générer le nombre secret $k$ (per-message) tel que $0 < k < l$.
 - [ ] Calculer la composante $r = (g^k \pmod p) \pmod l$.
 - [ ] Gérer l'inversion modulaire de $k$ ($k^{-1} \pmod l$).
