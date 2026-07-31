@@ -5,8 +5,8 @@ JAVAC = javac
 JAVA = java
 SRC_DIR = src
 BIN_DIR = bin
-SRC = $(SRC_DIR)/DSA.java
-CLASS = DSA
+SRC = $(wildcard $(SRC_DIR)/*.java)
+MAIN_CLASS = DSA
 
 # Cible par défaut
 all: compile run
@@ -17,7 +17,7 @@ compile:
 
 # Exécution (indique à Java d'aller chercher dans le dossier bin)
 run: compile
-	$(JAVA) -cp $(BIN_DIR) $(CLASS)
+	$(JAVA) -cp $(BIN_DIR) $(MAIN_CLASS)
 
 # Nettoyage
 clean:

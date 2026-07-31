@@ -21,6 +21,10 @@ public class SHA3 {
     // L'état interne de 1600 bits (tableau de 5x5 mots de 64 bits)
     private long[][] state = new long[5][5];
 
+    // Paramètres pour SHA3-256
+    private static final int RATE_BYTES = 136;  //1088 bits
+    private static final int HASH_BYTES = 32;   // 256 bits
+
     // Les 24 constantes de round (Iota) définies dans le standard FIPS 202
     private static final long[] RC = {
         0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
@@ -126,7 +130,7 @@ public class SHA3 {
         state[0][0] ^= RC[round];
     }
 
-    private void keppacF() {
+    private void keccakF() {
         // Pour SHA-3 (b = 1600), le nombre de round est 24.
         // L'indexation commence à 12 + 2l - nr, ce qui donne 0 à 23 pour 24 rounds.
         int l = 6; // car 1600 = 25 * 2^6 (donc w = 64, l = 6)
@@ -140,5 +144,80 @@ public class SHA3 {
             chi();
             iota(ir);
         }
+    }
+
+    public byte[] hash(byte[] message) {
+        // Réinitialise l'état à 0 avant chaque nouveau hachage
+        state = new long[5][5];
+
+        int blockSize = RATE_BYTES;
+        int messageLength = message.length;
+        int offset = 0;
+
+        //======================
+        // PHASE 1 : ABSORPTION
+        //======================
+        while (messageLength >= blockSize) {
+            absorbBlock(message, offset, blockSize);
+            keccakF();
+            offset += blockSize;
+            messageLength -= blockSize;
+        }
+
+        //======================
+        // PHASE 2 : PADDING
+        //======================
+        // Création du dernier bloc avant le message restant
+        byte[] lastBlock = new byte[blockSize];
+        System.arraycopy(message, offset, lastBlock, 0, messageLength);
+
+        // Ajout du suffixe de SHA-3 et du premier bit de padding (0x06)
+        lastBlock[messageLength] = 0x06;
+
+        // Ajout du dernier bit de padding (0x80) à la fin du bloc
+        lastBlock[blockSize - 1] ^= (byte) 0x80;
+        absorbBlock(message, 0, blockSize);
+        keccakF();
+
+        //======================
+        // PHASE 3 : EXTRACTION
+        //======================
+        return squeeze(HASH_BYTES);
+    }
+
+    private void absorbBlock(byte[] block, int offset, int length) {
+        int wordCount = length / 8;
+        for (int i = 0; i < wordCount; i++) {
+            // Conversion de 8 octets en 1 long (Little-Endian)
+            long word = 0;
+            for (int j = 0; j < 8; j++) {
+                word |= ((long) (block[offset + i * 8 + j] & 0xFF)) << (8 * j);
+            }
+
+            // Placement dans la grille de 5x5 (remplissage colonne par colonne)
+            int x = i % 5;
+            int y = i / 5;
+            state[x][y] ^= word;
+        }
+    }
+
+    /**
+    * Extrait le hash final de l'état interne.
+     */
+    private byte[] squeeze(int outputLength) {
+        byte[] output = new byte[outputLength];
+        int wordCount = outputLength / 8;
+
+        for (int i = 0; i < wordCount; i++) {
+            int x = i % 5;
+            int y = i / 5;
+            long word = state[x][y];
+
+            // Conversion du long en 8 octets (Little-Endian)
+            for (int j = 0; j < 8; j++) {
+                output[i * 8 + j] = (byte) ((word >>> (8 * j)) & 0xFF);
+            }
+        }
+        return output;
     }
 }
