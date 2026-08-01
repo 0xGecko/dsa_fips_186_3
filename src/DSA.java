@@ -43,6 +43,41 @@ public class DSA {
 
         return new BigInteger[]{r, s};
     }
+
+    /**
+     * Vérifie une signature DSA selon FIPS 186-3 (section 4.7)
+     * paramètres : - messageHash, le condensé (hash) du message reçu
+     *              - r, la 1ère composante de la signature
+     *              - s, la 2ème composante de la signautre
+     * return : true si la signature est valide, false sinon
+     */
+    public boolean verify(byte[] messageHash, BigInteger r, BigInteger s) {
+        // Vérification des bornes : 0 < r < q et 0 < s < q
+        if (r.compareTo(BigInteger.ZERO) <= 0 || r.compareTo(q) >= 0 ||
+            s.compareTo(BigInteger.ZERO) <= 0 || s.compareTo(q) >= 0) {
+                return false;
+            }
+
+        // Conversion du hash en entier z
+        BigInteger z = new BigInteger(1, messageHash);
+
+        // Calcul de w = s^-1 mod q
+        BigInteger w = s.modInverse(q);
+
+        // Calcul de u1 = (z * w) mod q
+        BigInteger u1 = z.multiply(w).mod(q);
+
+        // Calcul de u2 = (r * w) mod q
+        BigInteger u2 = r.multiply(w).mod(q);
+
+        // Calcul de v = (((g^u1) * (y^u2)) mod p) mod q
+        BigInteger gu1 = g.modPow(u1, p);
+        BigInteger yu2 = y.modPow(u2, p);
+        BigInteger v = gu1.multiply(yu2).mod(p).mod(q);
+
+        return v.equals(r);
+    }
+    
     public static void main(String[] args) {
         //=========================================================
         System.out.println("\n--- Etape 1 : Paramètres DSA ---\n");
@@ -63,9 +98,9 @@ public class DSA {
         dsa.g = BigInteger.TWO.modPow(exposant, dsa.p);
 
         // Affichage des valeurs
-        System.out.println("Valeur de q " + dsa.q);
-        System.out.println("Valeur de p " + dsa.p);
-        System.out.println("Valeur de g " + dsa.g);
+        System.out.println("Valeur de q : " + dsa.q);
+        System.out.println("\nValeur de p : " + dsa.p);
+        System.out.println("\nValeur de g : " + dsa.g);
 
         //=========================================================
         System.out.println("\n--- Etape 2 : Génération des clés ---\n");
@@ -83,19 +118,83 @@ public class DSA {
         dsa.y = dsa.g.modPow(dsa.x, dsa.p);
 
         System.out.println("Clé privée x   : " + dsa.x);
-        System.out.println("Clé publique y : " + dsa.y);
+        System.out.println("\nClé publique y : " + dsa.y);
+
+        //=========================================================
+        System.out.println("\n--- Préparation du message ---\n");
+        //=========================================================
+
+        String message = "Vive la Cryptomonnaie";
+        System.out.println("Message brut : " + message);
+
+        // On instancie notre moteur de hachage SHA-3
+        SHA3 moteurSHA3 = new SHA3();
+
+        // On appelle la méthode hash() sur cet objet 
+        byte[] messageHash = moteurSHA3.hash(message.getBytes());
 
         //=========================================================
         System.out.println("\n--- Etape 3 : Signature ---\n");
         //=========================================================
-
-        String message = "Vive la Cryptomonnaie";
-        byte[] messageHash = message.getBytes(); // On simule un message haché pour le moment
 
         // Appel de la fonction signature
         BigInteger[] signature = dsa.sign(messageHash);
 
         System.out.println("Composante r : " + signature[0]);
         System.out.println("Composante s : " + signature[1]);
+
+        //=========================================================
+        System.out.println("\n--- Etape 4 : Vérification ---\n");
+        //=========================================================
+
+        boolean isValid = dsa.verify(messageHash, signature[0], signature[1]);
+        System.out.println("La signature est-elle valide ?\n" + isValid);
+
+        // Test avec un faux message pour vérifier que l'algorithme rejette les falsifications
+        String fauxMessage = "La Cryptographie = La Crpytomonnaie";
+        byte[] fauxMessageHash = fauxMessage.getBytes();
+        boolean isFakeValid = dsa.verify(fauxMessageHash, signature[0], signature[1]);
+        System.out.println("\nLa signature sur un message altéré est-elle valide ?\n" + isFakeValid);
+
+        //=========================================================================
+        System.out.println("\n--- Etape 5 : Benchmark (10k intérations) ---\n");
+        //=========================================================================
+
+        int iterations = 10000;
+        String messageBenchmark = "Message de test pour le benchmark DSA";
+        byte[] hashBenchmark = moteurSHA3.hash(messageBenchmark.getBytes());
+
+        // 1. Phase de Warm-up pour chauffer la JVM (Java Virtual Machine)
+        System.out.println("Chauffe de la JVM...");
+        for (int i = 0; i < 1000; i++) {
+            BigInteger[] sigWarmup = dsa.sign(hashBenchmark);
+            dsa.verify(hashBenchmark, sigWarmup[0], sigWarmup[1]);
+        }
+
+        // 2. Le vrai Benchmark
+        System.out.println("Lancement du benchmark sur " + iterations + " itérations...");
+        
+        long startTime = System.nanoTime();
+
+        for (int i = 0; i < iterations; i++) {
+            BigInteger[] sig = dsa.sign(hashBenchmark);
+            boolean valide = dsa.verify(hashBenchmark, sig[0], sig[1]);
+
+            // Sécurité : on s'assure que tout reste valide pendant le test
+            if (!valide) {
+                System.out.println("Erreur de vérification à l'itération : " + i);
+                break;
+            }
+        }
+
+        long endTime = System.nanoTime();
+
+        // Calculs et affichage
+        long dureeTotaleNanos = endTime - startTime;
+        long dureeTotaleMillis = dureeTotaleNanos / 1_000_000;
+        double moyenneParOperation = (double) dureeTotaleMillis / iterations;
+
+        System.out.println("Temps total écoulé : " + dureeTotaleMillis + " ms");
+        System.out.println("Temps moyen par itération (sign + verify) : " + moyenneParOperation + " ms");
     }
 }

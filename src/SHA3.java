@@ -176,7 +176,7 @@ public class SHA3 {
 
         // Ajout du dernier bit de padding (0x80) à la fin du bloc
         lastBlock[blockSize - 1] ^= (byte) 0x80;
-        absorbBlock(message, 0, blockSize);
+        absorbBlock(lastBlock, 0, blockSize);
         keccakF();
 
         //======================

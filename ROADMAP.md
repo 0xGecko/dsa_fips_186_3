@@ -31,16 +31,15 @@ Cette feuille de route détaille les étapes de développement pour l'implément
 - [x] Gérer les cas exceptionnels (recommencer si $r=0$ ou $s=0$).
 
 ## Étape 4 : Algorithme de Vérification
-- [ ] Implémenter le calcul de $w = s^{-1} \pmod l$.
-- [ ] Implémenter le calcul de $u_1 = (H(M) \cdot w) \pmod l$.
-- [ ] Implémenter le calcul de $u_2 = (r \cdot w) \pmod l$.
-- [ ] Implémenter la vérification finale : vérifier que $r == ((g^{u_1} \cdot y^{u_2}) \pmod p) \pmod l$.
+- [x] Implémenter le calcul de $w = s^{-1} \pmod l$.
+- [x] Implémenter le calcul de $u_1 = (H(M) \cdot w) \pmod l$.
+- [x] Implémenter le calcul de $u_2 = (r \cdot w) \pmod l$.
+- [x] Implémenter la vérification finale : vérifier que $r == ((g^{u_1} \cdot y^{u_2}) \pmod p) \pmod l$.
 
 ## Étape 5 : Benchmarking
-- [ ] Développer une boucle réalisant 10 000 opérations de signature et de vérification [cite: 5].
-- [ ] Développer un outil pour mesurer les performances.
-- [ ] Identifier et contourner les biais d'optimisation du compilateur JIT de Java.
-- [ ] Enregistrer les résultats et les spécifications de la machine de test.
+- [x] Développer une boucle réalisant 10 000 opérations de signature et de vérification.
+- [x] Développer un outil pour mesurer les performances.
+- [x] Enregistrer les résultats et les spécifications de la machine de test.
 
 ## Étape 6 : Finalisation et Rapport
 - [ ] Nettoyer, commenter et structurer le code.
